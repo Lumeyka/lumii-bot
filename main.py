@@ -341,7 +341,13 @@ async def save_screen_data(message, event_info, screen_results):
                 event_info["name"],
                 result
             ])
+        # Usuń wszystkie wiadomości bota w kanale
+        def is_bot_message(msg):
+            return msg.author == bot.user
 
+        await message.channel.purge(limit=100, check=is_bot_message)
+        
+        # Po zapisaniu danych do arkusza Google Sheets
         await message.channel.send(f"✅ Saved {len(screen_results)} results in Google Sheets.")
 
     except Exception as e:
@@ -620,7 +626,7 @@ class ItemSelectionView(discord.ui.View):
         user = interaction.user
         # ... (rest of your code)
         if str(user.id) in db and "completed" in db[str(user.id)]:
-            await interaction.response.send_message("❌ You have already filled out the form once. You cannot edit your selections again.", ephemeral=True)
+            await interaction.response.send_message("❌ You have already filled out the form once. If you want to change your selections, pls contact to menagements.", ephemeral=True)
             return
         # Load user answers from the database
         user_answers = db.get(str(user.id), {})  # Load from db
@@ -636,40 +642,16 @@ class ItemSelectionView(discord.ui.View):
             print(f"Error sending DM to {user.name}: {e}")
             await interaction.followup.send("❌ There was an error sending your questions. Please make sure you have private messaging enabled.", ephemeral=True)
     # Function to set up the item selection button
-async def setup_item_selection_button():
+@bot.event
+async def on_guild_join(guild):
     channel = bot.get_channel(1345776049648177232)
-    if channel:
-        print(f'Znaleziono kanał wyboru przedmiotów: {channel.name}')
-
-        try:
-            # Create embed for better presentation
-            embed = discord.Embed(
-                title="BIS Subject Selection",
-                description="👋 Welcome! Click the button below to select item categories.",
-                color=discord.Color.blue()
-            )
-            embed.set_footer(text="By clicking the button you will receive a private message with your questions.")
-
-            # Send message with persistent view
-            view = ItemSelectionView()
-
-            # Delete previous messages to avoid confusion
-            async for message in channel.history(limit=5):
-                if message.author == bot.user and (
-                    "wybór" in message.content.lower() if message.content else 
-                    (message.embeds and "Selection of subjects" in message.embeds[0].title)
-                ):
-                    await message.delete()
-
-            await channel.send(embed=embed, view=view)
-            print("Sent new item selection button message")
-
-        except discord.Forbidden:
-            print(f"The bot does not have permission to send messages in the channel {channel.name}")
-        except Exception as e:
-            print(f"Failed to send message:{e}")
-            import traceback
-            print(traceback.format_exc())
-    else:
-        print(f"Nie znaleziono kanału o ID {1345776049648177232}")
+    if channel is not None:
+        embed = discord.Embed(
+            title="BIS Subject Selection",
+            description="👋 Welcome! Click the button below to select item categories.",
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text="By clicking the button you will receive a private message with your questions.")
+        await channel.send(embed=embed, view=ItemSelectionView())
+        
 bot.run(TOKEN)
