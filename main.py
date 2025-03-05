@@ -12,6 +12,7 @@ import gspread
 import asyncio
 from oauth2client.service_account import ServiceAccountCredentials
 import datetime
+load_dotenv()  # Wczytuje zmienne z pliku .env (przydatne lokalnie)
 
 # Konfiguracja bota Discord
 TOKEN = os.getenv("DISCORD_TOKEN")  # Token bota z ustawień środowiskowych
